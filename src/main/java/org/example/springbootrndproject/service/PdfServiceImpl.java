@@ -13,6 +13,7 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Image;
 import org.example.springbootrndproject.dto.PdfRequest;
 import org.example.springbootrndproject.dto.PdfResponseDto;
+import org.example.springbootrndproject.dto.ResponseDto;
 import org.example.springbootrndproject.entity.Proposal;
 import org.example.springbootrndproject.repository.ProposalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -231,6 +232,7 @@ public class PdfServiceImpl implements PdfService {
 
         return proposalResponse;
     }
+
 
     private static Map<String, String> extractDetails(String text) {
         Map<String, String> details = new LinkedHashMap<>();

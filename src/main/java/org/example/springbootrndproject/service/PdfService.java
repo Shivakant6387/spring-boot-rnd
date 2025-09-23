@@ -10,4 +10,4 @@ public interface PdfService {
     public byte[] generatePdfBackGroundImage(PdfRequest request) throws Exception;
     PdfResponseDto extractDetails(MultipartFile file);
     Proposal proposalResponse(MultipartFile file, String companyName) throws Exception;
-}
+  }

@@ -2,10 +2,13 @@ package org.example.springbootrndproject.controller;
 
 import org.example.springbootrndproject.dto.PdfRequest;
 import org.example.springbootrndproject.dto.PdfResponseDto;
+import org.example.springbootrndproject.dto.ResponseDto;
 import org.example.springbootrndproject.entity.Proposal;
 import org.example.springbootrndproject.service.PdfService;
+import org.example.springbootrndproject.service.pdfread.health.HealthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class PdfController {
     @Autowired
     private PdfService pdfService;
+    @Autowired
+    private HealthService readLifeAndHealth;
 
     @PostMapping("/generate")
     public ResponseEntity<byte[]> generatePdf(@RequestBody PdfRequest request) {
