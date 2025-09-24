@@ -23,5 +23,6 @@ public class ResponseDto {
     private String intermediaryName;
     private String intermediaryCode;
     private String intermediaryContactNo;
+    private String payMode;
     private int httpStatus;
 }

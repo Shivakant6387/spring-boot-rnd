@@ -44,4 +44,9 @@ public class LifeController {
         ResponseDto response = lifeService.pnbMetLife(file);
         return ResponseEntity.status(response.getHttpStatus()).body(response);
     }
+    @PostMapping("/pramerica-life")
+    public ResponseEntity<ResponseDto> uploadPramericaPolicy(@RequestParam("file") MultipartFile file) {
+        ResponseDto response = lifeService.pramericaLifeRockSolidFuture(file);
+        return ResponseEntity.status(response.getHttpStatus()).body(response);
+    }
 }

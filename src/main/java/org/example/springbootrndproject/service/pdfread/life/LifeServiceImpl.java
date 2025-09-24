@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -234,6 +237,109 @@ public class LifeServiceImpl implements LifeService {
         }
 
         return response;
+    }
+
+    @Override
+    public ResponseDto pramericaLifeRockSolidFuture(MultipartFile file) {
+        ResponseDto response = new ResponseDto();
+
+        try (PDDocument document = PDDocument.load(file.getInputStream())) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            String text = stripper.getText(document);
+            text = text.replaceAll("\\r\\n", "\n").replaceAll("\\r", "\n");
+            text = text.replaceAll("[\\t ]+", " ");
+
+            String mobile = null;
+            Matcher mobileMatcher = Pattern.compile("\\b[6-9]\\d{9}\\b").matcher(text);
+            if (mobileMatcher.find()) {
+                mobile = mobileMatcher.group();
+            }
+            String productName = null;
+            Matcher productMatcher = Pattern.compile("Pramerica Life RockSolid Future", Pattern.CASE_INSENSITIVE).matcher(text);
+            if (productMatcher.find()) {
+                productName = productMatcher.group().trim();
+            }
+            String policyHolderName = null;
+            Matcher nameMatcher = Pattern.compile("(Mr|Mrs|Ms)\\.?\\s+([A-Z][a-z]+\\s+[A-Z][a-z]+)", Pattern.CASE_INSENSITIVE).matcher(text);
+            if (nameMatcher.find()) {
+                policyHolderName = nameMatcher.group(0).trim();
+            }
+            String amountPayable = null;
+            Matcher amtMatcher = Pattern.compile("Amount Payable\\s*[:\\-]?\\s*Rs\\.?\\s*([\\d,]+(?:\\.\\d{1,2})?)",
+                    Pattern.CASE_INSENSITIVE).matcher(text);
+            if (amtMatcher.find()) {
+                amountPayable = amtMatcher.group(1).trim();
+            }
+            String policyTerm = null;
+            Matcher termMatcher = Pattern.compile("Policy Term\\s*:?\\s*(\\d+)", Pattern.CASE_INSENSITIVE).matcher(text);
+            if (termMatcher.find()) {
+                policyTerm = termMatcher.group(1).trim();
+            }
+
+            String policyNumber = null;
+            Matcher policyMatcher = Pattern.compile("Policy\\s*Number[^0-9]*(\\d{6,12})",
+                            Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+                    .matcher(text);
+            if (policyMatcher.find()) {
+                policyNumber = policyMatcher.group(1).trim();
+            }
+
+            String policyHolderAddress = null;
+
+            Matcher addrMatcher = Pattern.compile(
+                    "(S/O[\\s\\S]*?\\d{6},\\s*[A-Za-z]+)",
+                    Pattern.CASE_INSENSITIVE
+            ).matcher(text);
+
+            if (addrMatcher.find()) {
+                policyHolderAddress = addrMatcher.group(1)
+                        .replaceAll("\\s+", " ")
+                        .trim();
+            }
+            String agentName = findFirstGroup(text, "(?i)Your Agent Name\\s*[-:]\\s*(.*?)(?:,|Code|Email|$)");
+            String agentCode = findFirstGroup(text, "(?i)Code\\s*[-–:]\\s*([A-Z0-9]+)");
+            String branchPhone = findFirstGroup(text, "(?i)Phone No\\.?\\s*[-:]\\s*(\\d{8,12})");
+              if (agentName != null) agentName = agentName.trim();
+            String premiumFrequency = findFirstGroup(text, "(?i)Premium\\s*Frequency\\s*(Monthly|Quarterly|Half[- ]?Yearly|Yearly)");
+            if (premiumFrequency == null) {
+                premiumFrequency = findFirstGroup(text, "&\\s*(Monthly|Quarterly|Half[- ]?Yearly|Yearly)");
+            }
+            response.setPayMode(premiumFrequency);
+            response.setIntermediaryName(agentName);
+            response.setIntermediaryCode(agentCode);
+            response.setIntermediaryContactNo(branchPhone);
+            response.setPolicyHolderAddress(policyHolderAddress);
+            response.setPolicyNumber(policyNumber);
+            response.setPolicyTerm(policyTerm);
+            response.setPolicyHolderName(policyHolderName);
+            response.setMobileNumber(mobile);
+            response.setProductName(productName);
+            response.setTotalAmount(amountPayable);
+            response.setInsurerName("Pramerica Life Insurance Ltd.");
+            response.setMessage("Fetched data successfully!");
+            response.setHttpStatus(HttpStatus.OK.value());
+
+        } catch (IOException e) {
+            throw new PdfProcessingException("Failed to read or parse PDF file", e);
+        }
+
+        return response;
+    }
+
+    private static String findFirstGroup(String text, String regex) {
+        try {
+            Matcher matcher = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(text);
+            if (matcher.find()) {
+                if (matcher.groupCount() >= 1) {
+                    return matcher.group(1).trim();
+                } else {
+                    return matcher.group().trim();
+                }
+            }
+        } catch (Exception e) {
+            // log if needed
+        }
+        return null;
     }
 
     private String clean(String input) {

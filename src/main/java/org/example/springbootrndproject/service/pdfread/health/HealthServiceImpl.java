@@ -75,7 +75,8 @@ public class HealthServiceImpl implements HealthService {
             PDFTextStripper stripper = new PDFTextStripper();
             String text = stripper.getText(document);
             text = text.replaceAll("\\r\\n?", "\n");
-            text = text.replaceAll("\\s{2,}", " ");
+            text = text.replaceAll("(?m)[ \\t]{2,}", " ");
+            text = text.replaceAll("\\n{3,}", "\n\n");
             String policyNumber = null;
             Matcher policyMatcher = Pattern.compile("Policy No\\.?\\s*:?\\s*(\\d+)", Pattern.CASE_INSENSITIVE)
                     .matcher(text);
@@ -179,7 +180,52 @@ public class HealthServiceImpl implements HealthService {
             if (insurerMatcher.find()) {
                 insurerName = "Care Health Insurance Limited";
             }
+            String premiumPaid = null;
 
+            Matcher premiumMatcher = Pattern.compile(
+                    "Premium Paid\\s*Rs\\.\\s*([0-9,]+\\.\\d{2})",
+                    Pattern.CASE_INSENSITIVE
+            ).matcher(text);
+
+            if (premiumMatcher.find()) {
+                premiumPaid = premiumMatcher.group(1).trim();
+            }
+            String netPremium = null;
+
+            Matcher netPremiumMatcher = Pattern.compile(
+                    "\\( Premium Rs\\s*([0-9,]+\\.\\d{2})",
+                    Pattern.CASE_INSENSITIVE
+            ).matcher(text);
+
+            if (netPremiumMatcher.find()) {
+                netPremium = netPremiumMatcher.group(1).trim();
+            }
+            String policyHolderName = null;
+            Matcher holderMatcher = Pattern.compile(
+                    "Policy Period\\s*\\n\\s*(Mr\\.?|Mrs\\.?|Ms\\.?)?\\s*([A-Za-z ]+)",
+                    Pattern.CASE_INSENSITIVE
+            ).matcher(text);
+            if (holderMatcher.find()) {
+                policyHolderName = holderMatcher.group(2).trim();
+            }
+
+            // -----------------------------
+            // Extract Policyholder Address
+            // -----------------------------
+            String policyHolderAddress = null;
+            Matcher addressMatcher = Pattern.compile(
+                    "Address\\s*\\nPolicyholder\\s*\\n([\\s\\S]*?)(?=S\\.No\\.|Premium Details)",
+                    Pattern.CASE_INSENSITIVE
+            ).matcher(text);
+            if (addressMatcher.find()) {
+                policyHolderAddress = addressMatcher.group(1)
+                        .replaceAll("\\n+", ", ")
+                        .trim();
+            }
+            response.setPolicyHolderName(policyHolderName);
+            response.setPolicyHolderAddress(policyHolderAddress);
+            response.setNetPremium(netPremium);
+            response.setTotalAmount(premiumPaid);
             response.setInsurerName(insurerName);
             response.setPolicyTerm(policyTerm);
             response.setIntermediaryName(intermediaryName);
